@@ -85,10 +85,12 @@ class Extractable(ExtractableBase):
     A single extraction or a single segment
     """
 
-    def __init__(self, value=None) -> None:
+    def __init__(self, value=None, prov_id=None) -> None:
         ExtractableBase.__init__(self)
         self.tokenize_results = dict()
         self._value = value
+        self.prov_id = prov_id
+
 
     def get_tokens(self, tokenizer: Tokenizer, keep_multi_space: bool = False) -> List[Token]:
         """
@@ -117,6 +119,14 @@ class Extractable(ExtractableBase):
             self.tokenize_results[(self, tokenizer)] = tokens
             return tokens
 
+    @property
+    def prov_id(self):
+        return self.__prov_id
+        
+    @prov_id.setter
+    def prov_id(self, prov_id):
+       self.__prov_id = prov_id
+
 
 class Extraction(Extractable):
     """
@@ -144,6 +154,8 @@ class Extraction(Extractable):
 
         """
         self._tag = tag
+        #origin_record = OriginRecord()
+        #extraction_provenance_record = ExtractionProvenanceRecord(json_path: str, method: str, start_char: str, end_char:str, confidence)
         fake_provenance = {
             "extractor_name": extractor_name,
             "confidence": confidence,
@@ -185,3 +197,12 @@ class Extraction(Extractable):
 
         """
         return self._tag
+
+    @property
+    def provenance(self) -> str:
+        """
+
+        Returns: the tag associated with this Extraction.
+
+        """
+        return self._provenance

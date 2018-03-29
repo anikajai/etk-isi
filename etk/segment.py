@@ -2,7 +2,7 @@ from etk.etk_extraction import Extractable, Extraction
 import copy
 from typing import List, Dict
 # from etk.document import Document # will throw exception
-
+from etk.storage_provenance_record import StorageProvenanceRecord
 
 class Segment(Extractable):
     """
@@ -55,16 +55,32 @@ class Segment(Extractable):
         Returns:
 
         """
+        print ("I am storing")
         if not len(extractions):
             return
 
         if group_by_tags:
+            print ("I am storing2")
             try:
-                next(x for x in extractions if x.tag)
+                print ("I am storing3")
+                #next(x for x in extractions if x.tag)
+                print ("I am storing4")
+                
                 child_segment = Segment(self.full_path+'.'+attribute, {}, self.document)
+                provenance_ids = []
+                print ("hello\n")
                 for e in extractions:
                     child_segment.store_extractions([e], e.tag if e.tag else 'NO_TAGS', False)
+                    provenance_ids.append(e.prov_id)
+
+                    #storage_provenance_record = StorageProvenanceRecord(extractable.full_path, extracted_results.extractor_name, extracted_results.start_char, extracted_results.end_char, extracted_results.confidence, extractable.document)
+                    #extraction_provenance_records.append(extraction_provenance_record)
+                    #self.document.store_provenance(storage_provenance_record)
                 self.document.cdr_document[attribute] = child_segment._value
+                storage_provenance_record: StorageProvenanceRecord = StorageProvenanceRecord(self.json_path, attribute, provenance_ids, self.document)
+                #self.extraction_provenance_records.append(self.extraction_provenance_id_index)
+                #self.extraction_provenance_id_index = self.extraction_provenance_id_index + 1
+                self.create_provenance(storage_provenance_record)
                 return
             except StopIteration:
                 pass
@@ -86,3 +102,21 @@ class Segment(Extractable):
 
         """
         return self._extractions
+
+
+    def create_provenance(self, storage_provenance_record: StorageProvenanceRecord) -> None:
+        if "provenances" not in self.document.cdr_document:
+            self.document.cdr_document["provenances"] = []
+        self.document.cdr_document["provenances"].append(self.get_dict_storage_provenance(storage_provenance_record))
+        #self.document.cdr_document["provenances"] = [] # to be done only at the 1st time
+        #get_dictionary from extractionProveneaceRecord. Append that dictionary here
+
+
+    def get_dict_storage_provenance(self, storage_provenance_record: StorageProvenanceRecord) -> None:
+        dict = {}
+        dict["@type"] = "storage_provenance_record"
+        dict["doc_id"] = storage_provenance_record.doc_id
+        dict["field"] = storage_provenance_record.field
+        dict["destination"] = storage_provenance_record.destination
+        dict["provenance_record_id"] = storage_provenance_record.provenance_record_id
+        return dict
